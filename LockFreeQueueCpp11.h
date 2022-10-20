@@ -32,15 +32,15 @@ public:
 
     delete [] (char*)_queue;
   }
-  
+
   size_t capacity() const {return _capacity;}
-  
+
   size_t size() const
   {
     size_t head = _head.load(std::memory_order_acquire);
     return _tail.load(std::memory_order_relaxed) - head;
   }
-  
+
   bool push(const T& data)
   {
     Node* node;
@@ -48,7 +48,7 @@ public:
     for(;;)
     {
       node = &_queue[tail & _capacityMask];
-      if(node->tail.load(std::memory_order_relaxed) != tail)
+      if(node->tail.load(std::memory_order_acquire) != tail)
         return false;
       if((_tail.compare_exchange_weak(tail, tail + 1, std::memory_order_relaxed)))
         break;
@@ -65,7 +65,7 @@ public:
     for(;;)
     {
       node = &_queue[head & _capacityMask];
-      if(node->head.load(std::memory_order_relaxed) != head)
+      if(node->head.load(std::memory_order_acquire) != head)
         return false;
       if(_head.compare_exchange_weak(head, head + 1, std::memory_order_relaxed))
         break;
